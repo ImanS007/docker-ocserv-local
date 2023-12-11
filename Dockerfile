@@ -2,7 +2,7 @@ FROM alpine:3.7
 
 MAINTAINER Tommy Lau <tommy@gen-new.com>
 
-ENV OC_VERSION=0.12.1
+ENV OC_VERSION=1.2.2
 
 RUN buildDeps=" \
 		curl \
@@ -22,15 +22,12 @@ RUN buildDeps=" \
 	"; \
 	set -x \
 	&& apk add --update --virtual .build-deps $buildDeps \
-	&& curl -SL "ftp://ftp.infradead.org/pub/ocserv/ocserv-$OC_VERSION.tar.xz" -o ocserv.tar.xz \
-	&& curl -SL "ftp://ftp.infradead.org/pub/ocserv/ocserv-$OC_VERSION.tar.xz.sig" -o ocserv.tar.xz.sig \
-	&& gpg --keyserver pgp.mit.edu --recv-key 7F343FA7 \
-	&& gpg --keyserver pgp.mit.edu --recv-key 96865171 \
-	&& gpg --verify ocserv.tar.xz.sig \
+	&& curl -SL "gitlab.com/openconnect/ocserv/-/archive/$OC_VERSION/ocserv-$OC_VERSION.tar.gz" -o ocserv.tar.gz \
 	&& mkdir -p /usr/src/ocserv \
-	&& tar -xf ocserv.tar.xz -C /usr/src/ocserv --strip-components=1 \
-	&& rm ocserv.tar.xz* \
+	&& tar -xf ocserv.tar.gz -C /usr/src/ocserv --strip-components=1 \
+	&& rm ocserv.tar.gz* \
 	&& cd /usr/src/ocserv \
+	&& autoreconf -i \
 	&& ./configure \
 	&& make \
 	&& make install \
@@ -74,4 +71,4 @@ COPY docker-entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 
 EXPOSE 443
-CMD ["ocserv", "-c", "/etc/ocserv/ocserv.conf", "-f"]
+CMD ["ocserv", "-c", "/etc/ocserv/ocserv.conf", "-f"] 
