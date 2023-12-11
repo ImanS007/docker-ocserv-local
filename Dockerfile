@@ -1,49 +1,53 @@
-FROM alpine:3.7
-
-MAINTAINER Tommy Lau <tommy@gen-new.com>
+FROM debian:11-slim
 
 ENV OC_VERSION=1.2.2
-
 RUN buildDeps=" \
 		curl \
-		g++ \
+		gcc \
 		gnutls-dev \
-		gpgme \
+		libgpgme11 \
 		libev-dev \
-		libnl3-dev \
+		libnl-3-dev \
 		libseccomp-dev \
-		linux-headers \
-		linux-pam-dev \
-		lz4-dev \
+		linux-headers-amd64 \
+		libpam0g-dev \
+		liblz4-dev \
 		make \
-		readline-dev \
+		libreadline-dev \
 		tar \
-		xz \
+		xz-utils \
+		autoconf \
+		ca-certificates \
+		automake \
+		pkg-config \
+		libcurl4-openssl-dev \
+		libcjose0 \
+		libcjose-dev \
+		libcrypt1 \
+		libcrypto++-dev \ 
+		libssl-dev \
+		protobuf-c-compiler \
+		gperf \
+		libjansson4 \
+		libjansson-dev \
 	"; \
 	set -x \
-	&& apk add --update --virtual .build-deps $buildDeps \
-	&& curl -SL "gitlab.com/openconnect/ocserv/-/archive/$OC_VERSION/ocserv-$OC_VERSION.tar.gz" -o ocserv.tar.gz \
+	&& ( apt-get update || true ) \
+	&& apt-get install -y --no-install-recommends $buildDeps 
+
+RUN curl -SL "gitlab.com/openconnect/ocserv/-/archive/$OC_VERSION/ocserv-$OC_VERSION.tar.gz" -o ocserv.tar.gz \
 	&& mkdir -p /usr/src/ocserv \
 	&& tar -xf ocserv.tar.gz -C /usr/src/ocserv --strip-components=1 \
 	&& rm ocserv.tar.gz* \
 	&& cd /usr/src/ocserv \
-	&& autoreconf -i \
-	&& ./configure \
+	&& autoreconf -fvi \
+	&& ./configure --enable-oidc-auth --without-radius \
 	&& make \
 	&& make install \
 	&& mkdir -p /etc/ocserv \
 	&& cp /usr/src/ocserv/doc/sample.config /etc/ocserv/ocserv.conf \
 	&& cd / \
-	&& rm -fr /usr/src/ocserv \
-	&& runDeps="$( \
-		scanelf --needed --nobanner /usr/local/sbin/ocserv \
-			| awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
-			| xargs -r apk info --installed \
-			| sort -u \
-		)" \
-	&& apk add --virtual .run-deps $runDeps gnutls-utils iptables libnl3 readline \
-	&& apk del .build-deps \
-	&& rm -rf /var/cache/apk/*
+	&& rm -fr /usr/src/ocserv 
 
 # Setup config
 COPY groupinfo.txt /tmp/
