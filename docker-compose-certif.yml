@@ -1,0 +1,16 @@
+version: "3.0" 
+services:
+  letsencrypt:
+    container_name: certbot-service
+    image: certbot/certbot:latest
+    command: sh -c "certbot certonly --webroot -w /tmp/acme_challenge -d test.leangaurav.com --text --agree-tos --email your.email@email.com --rsa-key-size 4096 --verbose --keep-until-expiring --preferred-challenges=http"
+    volumes:
+      - "/etc/letsencrypt:/etc/letsencrypt"
+      - "/tmp/acme_challenge:/tmp/acme_challenge"
+      # - certbot-webroot-tols:/webroots/tols/.well-known
+      # - certbot-letsencrypt:/etc/letsencryp
+    environment:
+      - TERM=xterm
+# volumes:
+#   certbot-webroot-tols:
+#   certbot-letsencrypt:

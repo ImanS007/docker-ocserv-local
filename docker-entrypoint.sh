@@ -41,16 +41,16 @@ if [ ! -f /etc/ocserv/certs/server-key.pem ] || [ ! -f /etc/ocserv/certs/server-
 	crl_signing_key
 	EOCA
 	certtool --generate-self-signed --load-privkey ca-key.pem --template ca.tmpl --outfile ca.pem
-	certtool --generate-privkey --outfile server-key.pem 
-	cat > server.tmpl <<-EOSRV
-	cn = "$SRV_CN"
-	organization = "$SRV_ORG"
-	expiration_days = $SRV_DAYS
-	signing_key
-	encryption_key
-	tls_www_server
-	EOSRV
-	certtool --generate-certificate --load-privkey server-key.pem --load-ca-certificate ca.pem --load-ca-privkey ca-key.pem --template server.tmpl --outfile server-cert.pem
+	# certtool --generate-privkey --outfile server-key.pem 
+	# cat > server.tmpl <<-EOSRV
+	# cn = "$SRV_CN"
+	# organization = "$SRV_ORG"
+	# expiration_days = $SRV_DAYS
+	# signing_key
+	# encryption_key
+	# tls_www_server
+	# EOSRV
+	# certtool --generate-certificate --load-privkey server-key.pem --load-ca-certificate ca.pem --load-ca-privkey ca-key.pem --template server.tmpl --outfile server-cert.pem
 
 	# Create a test user
 	if [ -z "$NO_TEST_USER" ] && [ ! -f /etc/ocserv/ocpasswd ]; then

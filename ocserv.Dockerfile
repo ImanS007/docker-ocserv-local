@@ -1,6 +1,6 @@
 FROM debian:11-slim
 
-ENV OC_VERSION=1.2.2
+# ENV OC_VERSION=1.2.2
 RUN buildDeps=" \
 		curl \
 		gcc \
@@ -33,9 +33,13 @@ RUN buildDeps=" \
 	"; \
 	set -x \
 	&& ( apt-get update || true ) \
-	&& apt-get install -y --no-install-recommends $buildDeps 
+	&& apt-get install -y --no-install-recommends $buildDeps \
+	&& curl -SL http://ocserv.gitlab.io/www/download.html -o download.html \
+	&& OC_VERSION=`sed -n 's/^.*The latest version of ocserv is \(.*\)$/\1/p' download.html` \
+	&& OC_FILE="ocserv-$OC_VERSION" \
+	&& rm -fr download.html 
 
-RUN curl -SL "gitlab.com/openconnect/ocserv/-/archive/$OC_VERSION/ocserv-$OC_VERSION.tar.gz" -o ocserv.tar.gz \
+RUN curl -SL "gitlab.com/openconnect/ocserv/-/archive/$OC_VERSION/$OC_FILE.tar.gz" -o ocserv.tar.gz \
 	&& mkdir -p /usr/src/ocserv \
 	&& tar -xf ocserv.tar.gz -C /usr/src/ocserv --strip-components=1 \
 	&& rm ocserv.tar.gz* \

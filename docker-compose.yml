@@ -1,7 +1,10 @@
 version: '3.0'
 services:
   ocserv:
-    image: tommylau/ocserv
+    build:
+      context: .
+      dockerfile: ocserv.Dockerfile
+    # image: tommylau/ocserv
     restart: always
     container_name: ocserv
     privileged: true
@@ -11,6 +14,7 @@ services:
       - 443:443
     volumes:
       - "/opt/ocserv:/etc/ocserv"
+      # - /etc/ocserv/certs:/etc/letsencrypt
     environment:
       - CA_CN=VPN CA
       - CA_ORG=Big Corp
@@ -18,3 +22,24 @@ services:
       - SRV_CN=www.example.com
       - SRV_ORG=My Company
       - SRV_DAYS=9999
+
+      
+  nginx:
+    container_name: nginx-service
+    build:
+      context: .
+      dockerfile: nginx.Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      # - ./config:/config
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /tmp/acme_challenge:/tmp/acme_challenge
+      # - certbot-webroot-tols:/webroots/tols/.well-known
+      # - certbot-letsencrypt:/etc/letsencryp
+    restart: always
+
+# volumes:
+#   certbot-webroot-tols:
+#   certbot-letsencrypt:
