@@ -1,5 +1,6 @@
 #!/bin/sh
-
+mkdir /etc/ocserv/certs
+cp /etc/letsencrypt/live/your_domain/*.pem /etc/ocserv/certs
 # Open ipv4 ip forward
 sysctl -w net.ipv4.ip_forward=1
 
