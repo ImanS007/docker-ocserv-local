@@ -1,6 +1,7 @@
 FROM debian:11-slim
 
-# ENV OC_VERSION=1.2.2
+EXPOSE 443
+
 RUN buildDeps=" \
 		curl \
 		gcc \
@@ -37,9 +38,8 @@ RUN buildDeps=" \
 	&& curl -SL http://ocserv.gitlab.io/www/download.html -o download.html \
 	&& OC_VERSION=`sed -n 's/^.*The latest version of ocserv is \(.*\)$/\1/p' download.html` \
 	&& OC_FILE="ocserv-$OC_VERSION" \
-	&& rm -fr download.html 
-
-RUN curl -SL "gitlab.com/openconnect/ocserv/-/archive/$OC_VERSION/$OC_FILE.tar.gz" -o ocserv.tar.gz \
+	&& rm -fr download.html \
+	&& curl -SL "gitlab.com/openconnect/ocserv/-/archive/$OC_VERSION/$OC_FILE.tar.gz" -o ocserv.tar.gz \
 	&& mkdir -p /usr/src/ocserv \
 	&& tar -xf ocserv.tar.gz -C /usr/src/ocserv --strip-components=1 \
 	&& rm ocserv.tar.gz* \
@@ -54,29 +54,15 @@ RUN curl -SL "gitlab.com/openconnect/ocserv/-/archive/$OC_VERSION/$OC_FILE.tar.g
 	&& rm -fr /usr/src/ocserv 
 
 # Setup config
-COPY groupinfo.txt /tmp/
 RUN set -x \
-	&& sed -i 's/\.\/sample\.passwd/\/etc\/ocserv\/ocpasswd/' /etc/ocserv/ocserv.conf \
-	&& sed -i 's/\(max-same-clients = \)2/\110/' /etc/ocserv/ocserv.conf \
-	&& sed -i 's/\.\.\/tests/\/etc\/ocserv/' /etc/ocserv/ocserv.conf \
-	&& sed -i 's/#\(compression.*\)/\1/' /etc/ocserv/ocserv.conf \
-	&& sed -i '/^ipv4-network = /{s/192.168.1.0/192.168.99.0/}' /etc/ocserv/ocserv.conf \
-	&& sed -i 's/192.168.1.2/8.8.8.8/' /etc/ocserv/ocserv.conf \
-	&& sed -i 's/^route/#route/' /etc/ocserv/ocserv.conf \
-	&& sed -i 's/^no-route/#no-route/' /etc/ocserv/ocserv.conf \
-	&& sed -i '/\[vhost:www.example.com\]/,$d' /etc/ocserv/ocserv.conf \
-	&& mkdir -p /etc/ocserv/config-per-group \
-	&& cat /tmp/groupinfo.txt >> /etc/ocserv/ocserv.conf \
-	&& rm -fr /tmp/cn-no-route.txt \
-	&& rm -fr /tmp/groupinfo.txt
-
-WORKDIR /etc/ocserv
-
-COPY All /etc/ocserv/config-per-group/All
-COPY cn-no-route.txt /etc/ocserv/config-per-group/Route
+	&& sysctl -w net.ipv4.ip_forward=1 \
+	&& iptables -t nat -A POSTROUTING -j MASQUERADE \
+	&& iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu \
+	&& mkdir -p /dev/net \
+	&& mknod /dev/net/tun c 10 200 \
+	&& chmod 600 /dev/net/tun
 
 COPY docker-entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 
-EXPOSE 443
 CMD ["ocserv", "-c", "/etc/ocserv/ocserv.conf", "-f"] 
