@@ -26,11 +26,8 @@ services:
       - 80:80
       - 443:443
     volumes:
-      # - ./config:/config
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /tmp/acme_challenge:/tmp/acme_challenge
-      # - certbot-webroot-tols:/webroots/tols/.well-known
-      # - certbot-letsencrypt:/etc/letsencryp
+      - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./configs/nginx/conf.d:/etc/nginx/conf.d:ro
     restart: always
 
   certwatcher:
